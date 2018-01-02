@@ -10,12 +10,13 @@
  *
  * !!!新增!!!
  * 把tapObj对象注册在原生event对象上
- * 	event.tapObj拥有6个值
- * 	pageX,pageY,clientX,clientY,distanceX,distanceY
+ *  event.tapObj拥有6个值
+ *  pageX,pageY,clientX,clientY,distanceX,distanceY
  * 后面2个分别的手指可能移动的位置(以后可用于拓展手势)
  *
  * */
-;(function () {
+;
+(function() {
   var vueTap = {};
   var isVue2 = false;
 
@@ -24,7 +25,7 @@
     var uaInfo = navigator.userAgent;
     var agents = ["Android", "iPhone", "Windows Phone", "iPad", "iPod"];
     var flag = true;
-    for ( var i = 0; i < agents.length; i++ ) {
+    for (var i = 0; i < agents.length; i++) {
       if (uaInfo.indexOf(agents[i]) > 0) {
         flag = false;
         break;
@@ -68,35 +69,35 @@
   var vue1 = {
     isFn: true,
     acceptStatement: true,
-    update: function (fn) {
+    update: function(fn) {
       var self = this;
       self.tapObj = {};
       if (typeof fn !== 'function' && self.el.tagName.toLocaleLowerCase() !== 'a') {
         return console.error('The param of directive "v-tap" must be a function!');
       }
 
-      self.handler = function (e) { //This directive.handler
+      self.handler = function(e) { //This directive.handler
         e.tapObj = self.tapObj;
         if (self.el.href && !self.modifiers.prevent) {
           return window.location = self.el.href;
         }
 
         var tagName = e.target.tagName.toLocaleLowerCase();
-        if(tagName === 'input' || tagName === 'textarea') {
+        if (tagName === 'input' || tagName === 'textarea') {
           return e.target.focus();
         }
 
         fn.call(self, e);
       };
       if (isPc()) {
-        self.el.addEventListener('click', function (e) {
+        self.el.addEventListener('click', function(e) {
           if (self.el.href && !self.modifiers.prevent) {
             return window.location = self.el.href;
           }
           self.handler.call(self, e);
         }, false);
       } else {
-        self.el.addEventListener('touchstart', function (e) {
+        self.el.addEventListener('touchstart', function(e) {
 
           if (self.modifiers.stop)
             e.stopPropagation();
@@ -104,9 +105,9 @@
             e.preventDefault();
           touchstart(e, self);
         }, false);
-        self.el.addEventListener('touchend', function (e) {
+        self.el.addEventListener('touchend', function(e) {
           try {
-            Object.defineProperty(e, 'currentTarget', {// 重写currentTarget对象 与jq相同
+            Object.defineProperty(e, 'currentTarget', { // 重写currentTarget对象 与jq相同
               value: self.el,
               writable: true,
               enumerable: true,
@@ -128,9 +129,9 @@
   };
 
   var vue2 = {
-    bind: function (el, binding) {
+    bind: function(el, binding) {
       el.tapObj = {};
-      el.handler = function (e,isPc) { //This directive.handler
+      el.handler = function(e, isPc) { //This directive.handler
         var value = binding.value;
 
         if (!value && el.href && !binding.modifiers.prevent) {
@@ -141,14 +142,18 @@
         var tagName = value.event.target.tagName.toLocaleLowerCase();
         !isPc ? value.tapObj = el.tapObj : null;
 
-        if(tagName === 'input' || tagName === 'textarea') {
+        if (tagName === 'input' || tagName === 'textarea') {
           return value.event.target.focus();
         }
 
-        value.methods.call(this, value);
+        if (typeof value == 'function') {
+          value.call(this, e);
+        } else {
+          value.method.apply(this, value.params);
+        }
       };
       if (isPc()) {
-        el.addEventListener('click', function (e) {
+        el.addEventListener('click', function(e) {
 
           if (binding.modifiers.stop)
             e.stopPropagation();
@@ -157,7 +162,7 @@
           el.handler(e, true)
         }, false);
       } else {
-        el.addEventListener('touchstart', function (e) {
+        el.addEventListener('touchstart', function(e) {
 
           if (binding.modifiers.stop)
             e.stopPropagation();
@@ -165,9 +170,9 @@
             e.preventDefault();
           touchstart(e, el);
         }, false);
-        el.addEventListener('touchend', function (e) {
+        el.addEventListener('touchend', function(e) {
           try {
-            Object.defineProperty(e, 'currentTarget', {// 重写currentTarget对象 与jq相同
+            Object.defineProperty(e, 'currentTarget', { // 重写currentTarget对象 与jq相同
               value: el,
               writable: true,
               enumerable: true,
@@ -186,25 +191,29 @@
         }, false);
       }
     },
-    componentUpdated : function(el,binding) {
+    componentUpdated: function(el, binding) {
       el.tapObj = {};
-      el.handler = function (e,isPc) { //This directive.handler
+      el.handler = function(e, isPc) { //This directive.handler
         var value = binding.value;
         if (!value && el.href && !binding.modifiers.prevent) {
           return window.location = el.href;
         }
         value.event = e;
         !isPc ? value.tapObj = el.tapObj : null;
-        value.methods.call(this, value);
+
+        if (typeof value == 'function') {
+          value.call(this, e);
+        } else
+          value.method.apply(this, value.params);
       };
     },
-    unbind: function (el) {
+    unbind: function(el) {
       // 卸载，别说了都是泪
-      el.handler = function () {};
+      el.handler = function() {};
     }
   };
 
-  vueTap.install = function (Vue) {
+  vueTap.install = function(Vue) {
     if (Vue.version.substr(0, 1) > 1) {
       isVue2 = true;
     }
@@ -213,16 +222,6 @@
   };
   vueTap.version = '3.0.3';
 
-  if (typeof exports == "object") {
-    module.exports = vueTap;
-  } else if (typeof define == "function" && define.amd) {
-    define([], function () {
-      return vueTap
-    })
-  } else if (window.Vue) {
-    window.vueTap = vueTap;
-    Vue.use(vueTap);
-  }
+  module.exports = vueTap;
 
 })();
-
