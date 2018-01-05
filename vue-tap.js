@@ -142,6 +142,18 @@
         var tagName = value.event.target.tagName.toLocaleLowerCase();
         !isPc ? value.tapObj = el.tapObj : null;
 
+        try {
+          Array.prototype.forEach.call(document.querySelectorAll("input"), cur => {
+            cur.blur();
+          })
+
+          Array.prototype.forEach.call(document.querySelectorAll("textarea"), cur => {
+            cur.blur();
+          })
+        } catch (e) {
+          console.error(e.message)
+        }
+
         if (tagName === 'input' || tagName === 'textarea') {
           return value.event.target.focus();
         }
@@ -151,6 +163,7 @@
         } else {
           value.method.apply(this, value.params);
         }
+
       };
       if (isPc()) {
         el.addEventListener('click', function(e) {
@@ -200,6 +213,18 @@
         }
         value.event = e;
         !isPc ? value.tapObj = el.tapObj : null;
+
+        try {
+          Array.prototype.forEach.call(document.querySelectorAll("input"), cur => {
+            cur.blur();
+          })
+
+          Array.prototype.forEach.call(document.querySelectorAll("textarea"), cur => {
+            cur.blur();
+          })
+        } catch (e) {
+          console.error(e.message)
+        }
 
         if (typeof value == 'function') {
           value.call(this, e);
